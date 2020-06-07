@@ -39,8 +39,8 @@
 #include "Open3D/Core/TensorKey.h"
 namespace open3d {
 
-/// A tensorlist is a list of tensors of the same shape, similar to
-/// std::vector<Tensor>. Internally, a tensorlist stores the tensors in one
+/// A TensorList is a list of Tensors of the same shape, similar to
+/// std::vector<Tensor>. Internally, a TensorList stores the Tensors in one
 /// bigger internal tensor, where the first dimension of the internal tensor is
 /// extendable.
 ///
@@ -48,14 +48,14 @@ namespace open3d {
 /// - A 3D point cloud with N points:
 ///   - element_shape        : (3,)
 ///   - reserved_size        : M, where M >= N
-///   - internal_tensor shape: (M, 3)
+///   - internal_tensor.shape: (M, 3)
 /// - Sparse voxel grid of N voxels:
 ///   - element_shape        : (8, 8, 8)
 ///   - reserved_size        : M, where M >= N
-///   - internal_tensor shape: (M, 8, 8, 8)
+///   - internal_tensor.shape: (M, 8, 8, 8)
 class TensorList {
 public:
-    /// Constructor for creating an (empty by default) tensor list.
+    /// Creates an emtpy TensorList.
     ///
     /// \param shape Shape for the contained tensors. e.g.
     /// (3) for a list points,
