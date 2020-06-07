@@ -68,7 +68,6 @@ TEST_P(TensorPermuteDevices, Constructor) {
     SizeVector shape{2, 3};
     Dtype dtype = Dtype::Float32;
     Tensor t(shape, dtype, device);
-
     EXPECT_EQ(t.GetShape(), shape);
     EXPECT_EQ(t.GetBlob()->GetDevice(), device);
 }
