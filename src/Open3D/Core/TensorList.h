@@ -57,13 +57,13 @@ class TensorList {
 public:
     /// Creates an emtpy TensorList.
     ///
-    /// \param shape Shape for the contained tensors. e.g.
+    /// \param element_shape Shape for the contained tensors. e.g.
     /// (3) for a list points,
     /// (8, 8, 8) for a list of voxel blocks.
     /// \param dtype Type for the contained tensors. e.g. Dtype::Int64.
     /// \param device Device to store the contained tensors. e.g. "CPU:0".
     /// \param size Size of 0-th dimension.
-    TensorList(const SizeVector& shape,
+    TensorList(const SizeVector& element_shape,
                Dtype dtype,
                const Device& device = Device("CPU:0"),
                const int64_t& size = 0);
@@ -71,17 +71,19 @@ public:
     /// Constructor from a vector with broadcastable tensors.
     ///
     /// \param tensors A vector of tensors. The tensors must be broadcastable to
-    /// a common shape, which will be set as the shape of the TensorList. The
-    /// tensors must be on the same device and have the same dtype.
-    /// \param device Device to store the contained tensors. e.g. "CPU:0".
+    /// a common shape, which will be set as the element_shape of the
+    /// TensorList. The tensors must be on the same device and have the same
+    /// dtype. \param device Device to store the contained tensors. e.g.
+    /// "CPU:0".
     TensorList(const std::vector<Tensor>& tensors,
                const Device& device = Device("CPU:0"));
 
     /// Constructor from a list of broadcastable tensors.
     ///
     /// \param tensors A list of tensors. The tensors must be broadcastable to
-    /// a common shape, which will be set as the shape of the TensorList.
-    /// \param device Ddevice to store the contained tensors. e.g. "CPU:0".
+    /// a common shape, which will be set as the element_shape of the
+    /// TensorList. \param device Ddevice to store the contained tensors. e.g.
+    /// "CPU:0".
     TensorList(const std::initializer_list<Tensor>& tensors,
                const Device& device = Device("CPU:0"));
 
@@ -135,13 +137,13 @@ public:
     void Resize(int64_t n);
 
     /// Push back the copy of a tensor to the list.
-    /// The tensor must broadcastable to the TensorList's shape.
+    /// The tensor must broadcastable to the TensorList's element_shape.
     /// The tensor must be on the same device and have the same dtype.
     void PushBack(const Tensor& tensor);
 
     /// Concatenate two TensorLists.
     /// Return a new TensorList with data copied.
-    /// Two TensorLists must have the same shape, type, and device.
+    /// Two TensorLists must have the same element_shape, type, and device.
     static TensorList Concatenate(const TensorList& a, const TensorList& b);
 
     /// Concatenate two TensorLists.
@@ -150,8 +152,8 @@ public:
     }
 
     /// Extend the current TensorList with another TensorList appended to the
-    /// end. The data is copied. The two TensorLists must have the same shape,
-    /// dtype, and device.
+    /// end. The data is copied. The two TensorLists must have the same
+    /// element_shape, dtype, and device.
     void Extend(const TensorList& other);
 
     TensorList& operator+=(const TensorList& other) {
@@ -194,7 +196,7 @@ protected:
         size_ = size;
         reserved_size_ = ReserveSize(size_);
 
-        // Infer shape
+        // Infer element_shape
         element_shape_ = std::accumulate(
                 std::next(first), last, first->GetShape(),
                 [](const SizeVector shape, const Tensor& tensor) {
@@ -230,9 +232,9 @@ protected:
     /// Expand the size of the internal tensor.
     void ExpandTensor(int64_t new_reserved_size);
 
-    /// Expand the shape in the first indexing dimension.
+    /// Expand the element_shape in the first indexing dimension.
     /// e.g. (8, 8, 8) -> (1, 8, 8, 8)
-    static SizeVector ExpandFrontDim(const SizeVector& shape,
+    static SizeVector ExpandFrontDim(const SizeVector& element_shape,
                                      int64_t new_dim_size = 1);
 
     /// Compute the reserved size for the desired number of tensors
