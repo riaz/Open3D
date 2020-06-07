@@ -55,20 +55,18 @@ namespace open3d {
 ///   - internal_tensor.shape: (M, 8, 8, 8)
 class TensorList {
 public:
-    /// Creates an emtpy TensorList.
+    /// Constructs an emtpy TensorList.
     ///
-    /// \param element_shape Shape for the contained tensors. e.g.
-    /// (3) for a list points,
-    /// (8, 8, 8) for a list of voxel blocks.
-    /// \param dtype Type for the contained tensors. e.g. Dtype::Int64.
-    /// \param device Device to store the contained tensors. e.g. "CPU:0".
-    /// \param size Size of 0-th dimension.
+    /// \param element_shape Shape of the contained tensors, e.g. (3,).
+    /// \param dtype Data type of the contained tensors. e.g. Dtype::Float32.
+    /// \param device Device of the contained tensors. e.g. Device("CPU:0").
+    /// \param size Number of initial tensors, similar to std::vector<T>::size.
     TensorList(const SizeVector& element_shape,
                Dtype dtype,
                const Device& device = Device("CPU:0"),
                const int64_t& size = 0);
 
-    /// Constructor from a vector with broadcastable tensors.
+    /// Constructor a TensorList from a vector of Tensors.
     ///
     /// \param tensors A vector of tensors. The tensors must be broadcastable to
     /// a common shape, which will be set as the element_shape of the
