@@ -160,7 +160,8 @@ void TensorList::Extend(const TensorList& other) {  // Check consistency
 }
 
 Tensor TensorList::operator[](int64_t index) const {
-    index = WrapDim(index, size_);  // WrapDim asserts index is within range.
+    index = shape_util::WrapDim(
+            index, size_);  // WrapDim asserts index is within range.
     return internal_tensor_[index];
 }
 

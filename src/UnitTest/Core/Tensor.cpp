@@ -64,12 +64,13 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(TensorPermuteDevices, Constructor) {
     Device device = GetParam();
-
-    SizeVector shape{2, 3};
     Dtype dtype = Dtype::Float32;
-    Tensor t(shape, dtype, device);
-    EXPECT_EQ(t.GetShape(), shape);
-    EXPECT_EQ(t.GetBlob()->GetDevice(), device);
+
+    // Tensor t({2, 3}, dtype, device);
+    // EXPECT_EQ(t.GetShape(), shape);
+    // EXPECT_EQ(t.GetBlob()->GetDevice(), device);
+
+    Tensor t({-1, -1}, dtype, device);
 }
 
 TEST_P(TensorPermuteDevices, ConstructorBool) {
