@@ -55,6 +55,8 @@ namespace open3d {
 ///   - internal_tensor.shape: (M, 8, 8, 8)
 class TensorList {
 public:
+    TensorList() = delete;
+
     /// Constructs an emtpy TensorList.
     ///
     /// \param element_shape Shape of the contained tensors, e.g. (3,).

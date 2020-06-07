@@ -31,8 +31,8 @@ namespace open3d {
 // Public
 TensorList::TensorList(const SizeVector& shape,
                        Dtype dtype,
-                       const Device& device, /*= Device("CPU:0") */
-                       const int64_t& size /* = 0 */)
+                       const Device& device,
+                       const int64_t& size)
     : element_shape_(shape),
       dtype_(dtype),
       device_(device),
@@ -223,12 +223,12 @@ SizeVector TensorList::ExpandFrontDim(const SizeVector& shape,
 
 int64_t TensorList::ReserveSize(int64_t n) {
     if (n < 0) {
-        utility::LogError("Negative tensor list size {} is unsupported.", n);
+        utility::LogError("Negative tensor list size {} is not supported.", n);
     }
 
     int64_t base = 1;
     if (n > (base << 61)) {
-        utility::LogError("Too large tensor list size {} is unsupported.", n);
+        utility::LogError("Too large tensor list size {} is not supported.", n);
     }
 
     for (int i = 63; i >= 0; --i) {

@@ -39,6 +39,15 @@ INSTANTIATE_TEST_SUITE_P(TensorList,
                          TensorListPermuteDevices,
                          testing::ValuesIn(PermuteDevices::TestCases()));
 
+TEST_P(TensorListPermuteDevices, EmptyConstructor) {
+    Device device = GetParam();
+    Dtype dtype = Dtype::Float32;
+
+    TensorList tl({2, 3}, dtype, device);
+    EXPECT_EQ(tl.GetElementShape(), SizeVector({2, 3}));
+    EXPECT_EQ(tl.GetSize(), 0);
+}
+
 TEST_P(TensorListPermuteDevices, ConstructFromIterators) {
     Device device = GetParam();
 
