@@ -28,24 +28,6 @@
 #include "Open3D/Core/SizeVector.h"
 
 namespace open3d {
-// Public
-TensorList::TensorList(const SizeVector& shape,
-                       Dtype dtype,
-                       const Device& device,
-                       const int64_t& size)
-    : element_shape_(shape),
-      size_(size),
-      reserved_size_(ReserveSize(size)),
-      internal_tensor_(
-              ExpandFrontDim(element_shape_, reserved_size_), dtype, device) {}
-
-TensorList::TensorList(const std::vector<Tensor>& tensors) {
-    ConstructFromIterators(tensors.begin(), tensors.end());
-}
-
-TensorList::TensorList(const std::initializer_list<Tensor>& tensors) {
-    ConstructFromIterators(tensors.begin(), tensors.end());
-}
 
 TensorList::TensorList(const Tensor& internal_tensor, bool copy) {
     SizeVector shape = internal_tensor.GetShape();

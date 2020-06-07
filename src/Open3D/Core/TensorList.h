@@ -66,7 +66,13 @@ public:
     TensorList(const SizeVector& element_shape,
                Dtype dtype,
                const Device& device = Device("CPU:0"),
-               const int64_t& size = 0);
+               const int64_t& size = 0)
+        : element_shape_(element_shape),
+          size_(size),
+          reserved_size_(ReserveSize(size)),
+          internal_tensor_(ExpandFrontDim(element_shape_, reserved_size_),
+                           dtype,
+                           device) {}
 
     /// Constructor a TensorList from a vector of Tensors.
     ///
@@ -74,14 +80,18 @@ public:
     /// a common shape, which will be set as the element_shape of the
     /// TensorList. The tensors must be on the same device and have the same
     /// dtype.
-    TensorList(const std::vector<Tensor>& tensors);
+    TensorList(const std::vector<Tensor>& tensors) {
+        ConstructFromIterators(tensors.begin(), tensors.end());
+    }
 
     /// Constructor from a list of broadcastable tensors.
     ///
     /// \param tensors A list of tensors. The tensors must be broadcastable to
     /// a common shape, which will be set as the element_shape of the
     /// TensorList.
-    TensorList(const std::initializer_list<Tensor>& tensors);
+    TensorList(const std::initializer_list<Tensor>& tensors) {
+        ConstructFromIterators(tensors.begin(), tensors.end());
+    }
 
     /// Constructor from iterators, an abstract wrapper for std vectors
     /// and initializer lists.
