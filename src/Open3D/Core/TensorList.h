@@ -161,7 +161,7 @@ public:
 
     std::string ToString() const;
 
-    SizeVector GetShape() const { return shape_; }
+    SizeVector GetShape() const { return element_shape_; }
 
     Device GetDevice() const { return device_; }
 
@@ -188,7 +188,7 @@ protected:
         reserved_size_ = ReserveSize(size_);
 
         // Infer shape
-        shape_ = std::accumulate(
+        element_shape_ = std::accumulate(
                 std::next(first), last, first->GetShape(),
                 [](const SizeVector shape, const Tensor& tensor) {
                     return shape_util::BroadcastedShape(std::move(shape),
@@ -209,7 +209,8 @@ protected:
         }
 
         // Construct internal tensor
-        SizeVector expanded_shape = ExpandFrontDim(shape_, reserved_size_);
+        SizeVector expanded_shape =
+                ExpandFrontDim(element_shape_, reserved_size_);
         internal_tensor_ = Tensor(expanded_shape, dtype_, device_);
 
         // Assign tensors
@@ -232,23 +233,24 @@ protected:
     int64_t ReserveSize(int64_t n);
 
 protected:
-    /// The shape_ represents the shape for each element in the TensorList.
-    /// The internal_tensor_'s shape is (reserved_size_, *shape_).
-    SizeVector shape_;
+    /// The element_shape_ represents the shape for each element in the
+    /// TensorList. The internal_tensor_'s shape is (reserved_size_,
+    /// *element_shape_).
+    SizeVector element_shape_;
 
     Dtype dtype_;
     Device device_;
 
     /// Maximum number of elements in TensorList.
-    /// The internal_tensor_'s shape is (reserved_size_, *shape_).
+    /// The internal_tensor_'s shape is (reserved_size_, *element_shape_).
     /// In general, reserved_size_ >= (1 << (ceil(log2(size_)) + 1))
     /// as conventionally done in std::vector.
     /// Examples: (size_, reserved_size_) = (3, 8), (4, 8), (5, 16).
     int64_t reserved_size_ = 0;
 
     /// Number of active (valid) elements in TensorList.
-    /// The internal_tensor_ has shape (reserved_size_, *shape_), but only the
-    /// front (size_, *shape_) is active.
+    /// The internal_tensor_ has shape (reserved_size_, *element_shape_), but
+    /// only the front (size_, *element_shape_) is active.
     int64_t size_ = 0;
 
     /// The internal tensor for data storage.

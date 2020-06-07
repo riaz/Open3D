@@ -33,13 +33,13 @@ TensorList::TensorList(const SizeVector& shape,
                        Dtype dtype,
                        const Device& device, /*= Device("CPU:0") */
                        const int64_t& size /* = 0 */)
-    : shape_(shape),
+    : element_shape_(shape),
       dtype_(dtype),
       device_(device),
       size_(size),
       reserved_size_(ReserveSize(size)) {
-    internal_tensor_ =
-            Tensor(ExpandFrontDim(shape_, reserved_size_), dtype_, device_);
+    internal_tensor_ = Tensor(ExpandFrontDim(element_shape_, reserved_size_),
+                              dtype_, device_);
 }
 
 TensorList::TensorList(const std::vector<Tensor>& tensors, const Device& device)
@@ -58,12 +58,13 @@ TensorList::TensorList(const Tensor& internal_tensor, bool copy)
     SizeVector shape = internal_tensor.GetShape();
 
     size_ = shape[0];
-    shape_ = SizeVector(std::next(shape.begin()), shape.end());
+    element_shape_ = SizeVector(std::next(shape.begin()), shape.end());
 
     if (copy) {
         // Construct the internal tensor with copy
         reserved_size_ = ReserveSize(size_);
-        SizeVector expanded_shape = ExpandFrontDim(shape_, reserved_size_);
+        SizeVector expanded_shape =
+                ExpandFrontDim(element_shape_, reserved_size_);
         internal_tensor_ = Tensor(expanded_shape, dtype_, device_);
         internal_tensor_.Slice(0 /* dim */, 0, size_) = internal_tensor;
     } else {
@@ -85,7 +86,7 @@ TensorList TensorList::FromTensor(const Tensor& tensor, bool inplace) {
 TensorList::TensorList(const TensorList& other) { CopyFrom(other); }
 
 void TensorList::CopyFrom(const TensorList& other) {
-    shape_ = other.GetShape();
+    element_shape_ = other.GetShape();
     dtype_ = other.GetDtype();
     device_ = other.GetDevice();
     size_ = other.GetSize();
@@ -99,7 +100,7 @@ TensorList& TensorList::operator=(const TensorList& other) & {
 }
 
 void TensorList::ShallowCopyFrom(const TensorList& other) {
-    shape_ = other.GetShape();
+    element_shape_ = other.GetShape();
     dtype_ = other.GetDtype();
     device_ = other.GetDevice();
     size_ = other.GetSize();
@@ -126,8 +127,8 @@ void TensorList::Resize(int64_t n) {
 }
 
 void TensorList::PushBack(const Tensor& tensor) {
-    if (!shape_util::CanBeBrocastedToShape(tensor.GetShape(), shape_)) {
-        utility::LogError("Incompatible shape {} and {}", shape_,
+    if (!shape_util::CanBeBrocastedToShape(tensor.GetShape(), element_shape_)) {
+        utility::LogError("Incompatible shape {} and {}", element_shape_,
                           tensor.GetShape());
     }
 
@@ -148,9 +149,9 @@ TensorList TensorList::Concatenate(const TensorList& a, const TensorList& b) {
 }
 
 void TensorList::Extend(const TensorList& other) {  // Check consistency
-    if (shape_ != other.GetShape()) {
+    if (element_shape_ != other.GetShape()) {
         utility::LogError("TensorList shapes {} and {} are inconsistent.",
-                          shape_, other.GetShape());
+                          element_shape_, other.GetShape());
     }
 
     if (device_ != other.GetDevice()) {
@@ -192,7 +193,9 @@ Tensor TensorList::operator[](int64_t index) const {
     return internal_tensor_[index];
 }
 
-void TensorList::Clear() { *this = TensorList(shape_, dtype_, device_); }
+void TensorList::Clear() {
+    *this = TensorList(element_shape_, dtype_, device_);
+}
 
 // Protected
 void TensorList::ExpandTensor(int64_t new_reserved_size) {
@@ -200,7 +203,8 @@ void TensorList::ExpandTensor(int64_t new_reserved_size) {
         utility::LogError("New size {} is smaller than current size {}.",
                           new_reserved_size, reserved_size_);
     }
-    SizeVector new_expanded_shape = ExpandFrontDim(shape_, new_reserved_size);
+    SizeVector new_expanded_shape =
+            ExpandFrontDim(element_shape_, new_reserved_size);
     Tensor new_internal_tensor = Tensor(new_expanded_shape, dtype_, device_);
 
     // Copy data
@@ -249,7 +253,7 @@ int64_t TensorList::ReserveSize(int64_t n) {
 std::string TensorList::ToString() const {
     std::ostringstream rc;
     rc << fmt::format("\nTensorList[size={}, shape={}, {}, {}]", size_,
-                      shape_.ToString(), DtypeUtil::ToString(dtype_),
+                      element_shape_.ToString(), DtypeUtil::ToString(dtype_),
                       GetDevice().ToString());
     return rc.str();
 }
