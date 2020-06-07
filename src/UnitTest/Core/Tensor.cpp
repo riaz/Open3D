@@ -66,11 +66,17 @@ TEST_P(TensorPermuteDevices, Constructor) {
     Device device = GetParam();
     Dtype dtype = Dtype::Float32;
 
-    // Tensor t({2, 3}, dtype, device);
-    // EXPECT_EQ(t.GetShape(), shape);
-    // EXPECT_EQ(t.GetBlob()->GetDevice(), device);
+    for (const SizeVector &shape :
+         std::vector<SizeVector>{{}, {0}, {0, 0}, {0, 1}, {1, 0}, {2, 3}}) {
+        Tensor t(shape, dtype, device);
+        EXPECT_EQ(t.GetShape(), shape);
+        EXPECT_EQ(t.GetDtype(), dtype);
+        EXPECT_EQ(t.GetBlob()->GetDevice(), device);
+    }
 
-    Tensor t({-1, -1}, dtype, device);
+    EXPECT_ANY_THROW(Tensor({-1}, dtype, device));
+    EXPECT_ANY_THROW(Tensor({0, -2}, dtype, device));
+    EXPECT_ANY_THROW(Tensor({-1, -1}, dtype, device));
 }
 
 TEST_P(TensorPermuteDevices, ConstructorBool) {

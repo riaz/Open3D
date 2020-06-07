@@ -70,8 +70,16 @@ public:
         if (this->size() == 0) {
             return 1;
         }
-        return std::accumulate(this->begin(), this->end(), 1LL,
-                               std::multiplies<int64_t>());
+        return std::accumulate(
+                this->begin(), this->end(), 1LL,
+                [this](const int64_t& lhs, const int64_t& rhs) -> int64_t {
+                    if (lhs < 0 || rhs < 0) {
+                        utility::LogError(
+                                "Shape {} cannot contain negative dimensions.",
+                                this->ToString());
+                    }
+                    return std::multiplies<int64_t>()(lhs, rhs);
+                });
     }
 
     std::string ToString() const { return fmt::format("{}", *this); }
