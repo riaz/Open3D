@@ -236,22 +236,20 @@ protected:
     int64_t ReserveSize(int64_t n);
 
 protected:
-    /// The element_shape_ represents the shape for each element in the
-    /// TensorList. The internal_tensor_'s shape is (reserved_size_,
-    /// *element_shape_).
+    /// The shape for each element tensor in the TensorList.
     SizeVector element_shape_;
 
+    /// Number of active (valid) entries in TensorList.
+    int64_t size_ = 0;
+
     /// Maximum number of elements in TensorList.
-    /// The internal_tensor_'s shape is (reserved_size_, *element_shape_).
-    /// In general, reserved_size_ >= (1 << (ceil(log2(size_)) + 1))
-    /// as conventionally done in std::vector.
+    ///
+    /// The internal_tensor_'s shape is (reserved_size_, *element_shape_). In
+    /// general, reserved_size_ >= (1 << (ceil(log2(size_)) + 1)) as
+    /// conventionally done in std::vector.
+    ///
     /// Examples: (size_, reserved_size_) = (3, 8), (4, 8), (5, 16).
     int64_t reserved_size_ = 0;
-
-    /// Number of active (valid) elements in TensorList.
-    /// The internal_tensor_ has shape (reserved_size_, *element_shape_), but
-    /// only the front (size_, *element_shape_) is active.
-    int64_t size_ = 0;
 
     /// The internal tensor for data storage.
     Tensor internal_tensor_;
