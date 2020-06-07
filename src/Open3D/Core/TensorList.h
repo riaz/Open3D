@@ -161,7 +161,7 @@ public:
 
     std::string ToString() const;
 
-    SizeVector GetShape() const { return element_shape_; }
+    SizeVector GetElementShape() const { return element_shape_; }
 
     Device GetDevice() const { return device_; }
 

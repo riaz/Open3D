@@ -86,7 +86,7 @@ TensorList TensorList::FromTensor(const Tensor& tensor, bool inplace) {
 TensorList::TensorList(const TensorList& other) { CopyFrom(other); }
 
 void TensorList::CopyFrom(const TensorList& other) {
-    element_shape_ = other.GetShape();
+    element_shape_ = other.GetElementShape();
     dtype_ = other.GetDtype();
     device_ = other.GetDevice();
     size_ = other.GetSize();
@@ -100,7 +100,7 @@ TensorList& TensorList::operator=(const TensorList& other) & {
 }
 
 void TensorList::ShallowCopyFrom(const TensorList& other) {
-    element_shape_ = other.GetShape();
+    element_shape_ = other.GetElementShape();
     dtype_ = other.GetDtype();
     device_ = other.GetDevice();
     size_ = other.GetSize();
@@ -149,9 +149,9 @@ TensorList TensorList::Concatenate(const TensorList& a, const TensorList& b) {
 }
 
 void TensorList::Extend(const TensorList& other) {  // Check consistency
-    if (element_shape_ != other.GetShape()) {
+    if (element_shape_ != other.GetElementShape()) {
         utility::LogError("TensorList shapes {} and {} are inconsistent.",
-                          element_shape_, other.GetShape());
+                          element_shape_, other.GetElementShape());
     }
 
     if (device_ != other.GetDevice()) {

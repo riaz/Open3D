@@ -94,7 +94,7 @@ TEST_P(TensorListPermuteDevices, TensorConstructFromTensor) {
 
     TensorList tensor_list(t);
     SizeVector shape({2, 3});
-    EXPECT_EQ(tensor_list.GetShape(), shape);
+    EXPECT_EQ(tensor_list.GetElementShape(), shape);
     EXPECT_EQ(tensor_list.GetSize(), 3);
     EXPECT_EQ(tensor_list.GetReservedSize(), 8);
     EXPECT_EQ(tensor_list.AsTensor().ToFlatVector<float>(),
