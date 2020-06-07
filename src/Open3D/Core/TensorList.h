@@ -73,27 +73,20 @@ public:
     /// \param tensors A vector of tensors. The tensors must be broadcastable to
     /// a common shape, which will be set as the element_shape of the
     /// TensorList. The tensors must be on the same device and have the same
-    /// dtype. \param device Device to store the contained tensors. e.g.
-    /// "CPU:0".
-    TensorList(const std::vector<Tensor>& tensors,
-               const Device& device = Device("CPU:0"));
+    /// dtype.
+    TensorList(const std::vector<Tensor>& tensors);
 
     /// Constructor from a list of broadcastable tensors.
     ///
     /// \param tensors A list of tensors. The tensors must be broadcastable to
     /// a common shape, which will be set as the element_shape of the
-    /// TensorList. \param device Ddevice to store the contained tensors. e.g.
-    /// "CPU:0".
-    TensorList(const std::initializer_list<Tensor>& tensors,
-               const Device& device = Device("CPU:0"));
+    /// TensorList.
+    TensorList(const std::initializer_list<Tensor>& tensors);
 
     /// Constructor from iterators, an abstract wrapper for std vectors
     /// and initializer lists.
     template <class InputIterator>
-    TensorList(InputIterator first,
-               InputIterator last,
-               const Device& device = Device("CPU:0"))
-        : device_(device) {
+    TensorList(InputIterator first, InputIterator last) {
         ConstructFromIterators(first, last);
     }
 
@@ -172,9 +165,9 @@ public:
 
     SizeVector GetElementShape() const { return element_shape_; }
 
-    Device GetDevice() const { return device_; }
+    Device GetDevice() const { return internal_tensor_.GetDevice(); }
 
-    Dtype GetDtype() const { return dtype_; }
+    Dtype GetDtype() const { return internal_tensor_.GetDtype(); }
 
     int64_t GetSize() const { return size_; }
 
@@ -205,11 +198,11 @@ protected:
                 });
 
         // Infer dtype
-        dtype_ = first->GetDtype();
+        Dtype dtype = first->GetDtype();
         bool dtype_consistent = std::accumulate(
                 std::next(first), last, true,
                 [&](bool same_type, const Tensor& tensor) {
-                    return same_type && (dtype_ == tensor.GetDtype());
+                    return same_type && (dtype == tensor.GetDtype());
                 });
         if (!dtype_consistent) {
             utility::LogError(
@@ -218,9 +211,10 @@ protected:
         }
 
         // Construct internal tensor
+        Device device = first->GetDevice();
         SizeVector expanded_shape =
                 ExpandFrontDim(element_shape_, reserved_size_);
-        internal_tensor_ = Tensor(expanded_shape, dtype_, device_);
+        internal_tensor_ = Tensor(expanded_shape, dtype, device);
 
         // Assign tensors
         size_t i = 0;
@@ -246,9 +240,6 @@ protected:
     /// TensorList. The internal_tensor_'s shape is (reserved_size_,
     /// *element_shape_).
     SizeVector element_shape_;
-
-    Dtype dtype_;
-    Device device_;
 
     /// Maximum number of elements in TensorList.
     /// The internal_tensor_'s shape is (reserved_size_, *element_shape_).

@@ -34,27 +34,20 @@ TensorList::TensorList(const SizeVector& shape,
                        const Device& device,
                        const int64_t& size)
     : element_shape_(shape),
-      dtype_(dtype),
-      device_(device),
       size_(size),
-      reserved_size_(ReserveSize(size)) {
-    internal_tensor_ = Tensor(ExpandFrontDim(element_shape_, reserved_size_),
-                              dtype_, device_);
-}
+      reserved_size_(ReserveSize(size)),
+      internal_tensor_(
+              ExpandFrontDim(element_shape_, reserved_size_), dtype, device) {}
 
-TensorList::TensorList(const std::vector<Tensor>& tensors, const Device& device)
-    : device_(device) {
+TensorList::TensorList(const std::vector<Tensor>& tensors) {
     ConstructFromIterators(tensors.begin(), tensors.end());
 }
 
-TensorList::TensorList(const std::initializer_list<Tensor>& tensors,
-                       const Device& device)
-    : device_(device) {
+TensorList::TensorList(const std::initializer_list<Tensor>& tensors) {
     ConstructFromIterators(tensors.begin(), tensors.end());
 }
 
-TensorList::TensorList(const Tensor& internal_tensor, bool copy)
-    : dtype_(internal_tensor.GetDtype()), device_(internal_tensor.GetDevice()) {
+TensorList::TensorList(const Tensor& internal_tensor, bool copy) {
     SizeVector shape = internal_tensor.GetShape();
 
     size_ = shape[0];
@@ -65,7 +58,7 @@ TensorList::TensorList(const Tensor& internal_tensor, bool copy)
         reserved_size_ = ReserveSize(size_);
         SizeVector expanded_shape =
                 ExpandFrontDim(element_shape_, reserved_size_);
-        internal_tensor_ = Tensor(expanded_shape, dtype_, device_);
+        internal_tensor_ = Tensor(expanded_shape, GetDtype(), GetDevice());
         internal_tensor_.Slice(0 /* dim */, 0, size_) = internal_tensor;
     } else {
         // Directly reuse the slices
@@ -87,8 +80,6 @@ TensorList::TensorList(const TensorList& other) { CopyFrom(other); }
 
 void TensorList::CopyFrom(const TensorList& other) {
     element_shape_ = other.GetElementShape();
-    dtype_ = other.GetDtype();
-    device_ = other.GetDevice();
     size_ = other.GetSize();
     reserved_size_ = other.GetReservedSize();
     internal_tensor_.Assign(other.GetInternalTensor());
@@ -101,8 +92,6 @@ TensorList& TensorList::operator=(const TensorList& other) & {
 
 void TensorList::ShallowCopyFrom(const TensorList& other) {
     element_shape_ = other.GetElementShape();
-    dtype_ = other.GetDtype();
-    device_ = other.GetDevice();
     size_ = other.GetSize();
     reserved_size_ = other.GetReservedSize();
     internal_tensor_.ShallowCopyFrom(other.GetInternalTensor());
@@ -154,14 +143,14 @@ void TensorList::Extend(const TensorList& other) {  // Check consistency
                           element_shape_, other.GetElementShape());
     }
 
-    if (device_ != other.GetDevice()) {
+    if (GetDevice() != other.GetDevice()) {
         utility::LogError("TensorList device {} and {} are inconsistent.",
-                          device_.ToString(), other.GetDevice().ToString());
+                          GetDevice().ToString(), other.GetDevice().ToString());
     }
 
-    if (dtype_ != other.GetDtype()) {
+    if (GetDtype() != other.GetDtype()) {
         utility::LogError("TensorList dtype {} and {} are inconsistent.",
-                          DtypeUtil::ToString(dtype_),
+                          DtypeUtil::ToString(GetDtype()),
                           DtypeUtil::ToString(other.GetDtype()));
     }
 
@@ -194,7 +183,7 @@ Tensor TensorList::operator[](int64_t index) const {
 }
 
 void TensorList::Clear() {
-    *this = TensorList(element_shape_, dtype_, device_);
+    *this = TensorList(element_shape_, GetDtype(), GetDevice());
 }
 
 // Protected
@@ -205,7 +194,8 @@ void TensorList::ExpandTensor(int64_t new_reserved_size) {
     }
     SizeVector new_expanded_shape =
             ExpandFrontDim(element_shape_, new_reserved_size);
-    Tensor new_internal_tensor = Tensor(new_expanded_shape, dtype_, device_);
+    Tensor new_internal_tensor =
+            Tensor(new_expanded_shape, GetDtype(), GetDevice());
 
     // Copy data
     new_internal_tensor.Slice(0 /* dim */, 0, size_) =
@@ -253,8 +243,8 @@ int64_t TensorList::ReserveSize(int64_t n) {
 std::string TensorList::ToString() const {
     std::ostringstream rc;
     rc << fmt::format("\nTensorList[size={}, shape={}, {}, {}]", size_,
-                      element_shape_.ToString(), DtypeUtil::ToString(dtype_),
-                      GetDevice().ToString());
+                      element_shape_.ToString(),
+                      DtypeUtil::ToString(GetDtype()), GetDevice().ToString());
     return rc.str();
 }
 }  // namespace open3d

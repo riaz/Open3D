@@ -56,7 +56,7 @@ TEST_P(TensorListPermuteDevices, ConstructFromIterators) {
     Tensor t2(std::vector<float>(2 * 3, 2), {2, 3}, Dtype::Float32, device);
 
     std::vector<Tensor> tensors = {t0, t1, t2};
-    TensorList tensor_list(tensors.begin(), tensors.end(), device);
+    TensorList tensor_list(tensors.begin(), tensors.end());
 
     SizeVector shape({3, 2, 3});
     EXPECT_EQ(tensor_list.AsTensor().GetShape(), shape);
@@ -72,7 +72,7 @@ TEST_P(TensorListPermuteDevices, ConstructFromVector) {
     Tensor t2(std::vector<float>(2 * 3, 2), {2, 3}, Dtype::Float32, device);
 
     std::vector<Tensor> tensors = {t0, t1, t2};
-    TensorList tensor_list(tensors, device);
+    TensorList tensor_list(tensors);
 
     SizeVector shape({3, 2, 3});
     EXPECT_EQ(tensor_list.AsTensor().GetShape(), shape);
@@ -87,7 +87,7 @@ TEST_P(TensorListPermuteDevices, ConstructFromInitList) {
     Tensor t1(std::vector<float>(2 * 3, 1), {2, 3}, Dtype::Float32, device);
     Tensor t2(std::vector<float>(2 * 3, 2), {2, 3}, Dtype::Float32, device);
 
-    TensorList tensor_list({t0, t1, t2}, device);
+    TensorList tensor_list({t0, t1, t2});
 
     SizeVector shape({3, 2, 3});
     EXPECT_EQ(tensor_list.AsTensor().GetShape(), shape);
@@ -118,7 +118,7 @@ TEST_P(TensorListPermuteDevices, CopyConstruct) {
     Tensor t2(std::vector<float>(2 * 3, 2), {2, 3}, Dtype::Float32, device);
 
     std::vector<Tensor> tensors = {t0, t1, t2};
-    TensorList tensor_list(tensors, device);
+    TensorList tensor_list(tensors);
     TensorList tensor_list_new(tensor_list);
 
     EXPECT_EQ(tensor_list.AsTensor().ToFlatVector<float>(),
@@ -155,7 +155,7 @@ TEST_P(TensorListPermuteDevices, Resize) {
     Tensor t2(std::vector<float>(2 * 3, 2), {2, 3}, Dtype::Float32, device);
 
     std::vector<Tensor> tensors = {t0, t1, t2};
-    TensorList tensor_list(tensors, device);
+    TensorList tensor_list(tensors);
     EXPECT_EQ(tensor_list.GetSize(), 3);
     EXPECT_EQ(tensor_list.GetReservedSize(), 8);
     EXPECT_EQ(tensor_list.AsTensor().ToFlatVector<float>(),
@@ -184,7 +184,7 @@ TEST_P(TensorListPermuteDevices, PushBack) {
     Tensor t1(std::vector<float>(2 * 3, 1), {2, 3}, Dtype::Float32, device);
     Tensor t2(std::vector<float>(2 * 3, 2), {2, 3}, Dtype::Float32, device);
 
-    TensorList tensor_list({2, 3}, Dtype::Float32, device);
+    TensorList tensor_list({2, 3}, Dtype::Float32);
     EXPECT_EQ(tensor_list.GetSize(), 0);
     EXPECT_EQ(tensor_list.GetReservedSize(), 1);
 
@@ -216,7 +216,7 @@ TEST_P(TensorListPermuteDevices, AccessOperator) {
     Tensor t2(std::vector<float>(2 * 3, 2), {2, 3}, Dtype::Float32, device);
 
     std::vector<Tensor> tensors = {t0, t1, t2};
-    TensorList tensor_list(tensors, device);
+    TensorList tensor_list(tensors);
 
     EXPECT_EQ(tensor_list.GetSize(), 3);
     EXPECT_EQ(tensor_list[0].ToFlatVector<float>(), t0.ToFlatVector<float>());
@@ -241,7 +241,7 @@ TEST_P(TensorListPermuteDevices, Slice) {
     Tensor t3(std::vector<float>(2 * 3, 3), {2, 3}, Dtype::Float32, device);
 
     std::vector<Tensor> tensors = {t0, t1, t2, t3};
-    TensorList tensor_list(tensors, device);
+    TensorList tensor_list(tensors);
 
     Tensor tensor = tensor_list.AsTensor().Slice(0, 0, 3, 2);
     EXPECT_EQ(tensor.ToFlatVector<float>(),
@@ -257,7 +257,7 @@ TEST_P(TensorListPermuteDevices, IndexGet) {
     Tensor t3(std::vector<float>(2 * 3, 3), {2, 3}, Dtype::Float32, device);
 
     std::vector<Tensor> tensors = {t0, t1, t2, t3};
-    TensorList tensor_list(tensors, device);
+    TensorList tensor_list(tensors);
 
     std::vector<Tensor> indices = {Tensor(std::vector<int64_t>({0, -1, 2}), {3},
                                           Dtype::Int64, device)};
@@ -278,8 +278,8 @@ TEST_P(TensorListPermuteDevices, Concatenate) {
     Tensor t3(std::vector<float>(2 * 3, 3), {2, 3}, Dtype::Float32, device);
     std::vector<Tensor> tensors1 = {t1, t2, t3};
 
-    TensorList tensor_list0(tensors0, device);
-    TensorList tensor_list1(tensors1, device);
+    TensorList tensor_list0(tensors0);
+    TensorList tensor_list1(tensors1);
 
     TensorList tensor_list2 = tensor_list0 + tensor_list1;
     EXPECT_EQ(tensor_list2.GetSize(), 4);
@@ -308,8 +308,8 @@ TEST_P(TensorListPermuteDevices, Extend) {
     Tensor t3(std::vector<float>(2 * 3, 3), {2, 3}, Dtype::Float32, device);
     std::vector<Tensor> tensors1 = {t1, t2, t3};
 
-    TensorList tensor_list0(tensors0, device);
-    TensorList tensor_list1(tensors1, device);
+    TensorList tensor_list0(tensors0);
+    TensorList tensor_list1(tensors1);
 
     tensor_list0.Extend(tensor_list1);
     EXPECT_EQ(tensor_list0.GetSize(), 4);
@@ -333,7 +333,7 @@ TEST_P(TensorListPermuteDevices, Clear) {
     Tensor t0(std::vector<float>(2 * 3, 0), {2, 3}, Dtype::Float32, device);
     std::vector<Tensor> tensors = {t0};
 
-    TensorList tensor_list(tensors, device);
+    TensorList tensor_list(tensors);
     tensor_list.Clear();
     EXPECT_EQ(tensor_list.GetSize(), 0);
     EXPECT_EQ(tensor_list.GetReservedSize(), 1);
