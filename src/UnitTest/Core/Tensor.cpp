@@ -2395,6 +2395,11 @@ TEST_P(TensorPermuteDevices, IsSame) {
     EXPECT_TRUE(t0.IsSame(t1));
     EXPECT_TRUE(t1.IsSame(t0));
 
+    // Copy constructor copies view.
+    Tensor t0_copy_construct(t0);
+    EXPECT_TRUE(t0.IsSame(t0_copy_construct));
+    EXPECT_TRUE(t0_copy_construct.IsSame(t0));
+
     // New tensor of the same value.
     Tensor t2 = Tensor::Ones({6, 8}, Dtype::Float32, device);
     EXPECT_FALSE(t0.IsSame(t2));
@@ -2416,6 +2421,13 @@ TEST_P(TensorPermuteDevices, IsSame) {
     Tensor t0_copy = t0.Copy(device);
     EXPECT_FALSE(t0.IsSame(t0_copy));
     EXPECT_FALSE(t0_copy.IsSame(t0));
+
+    // std::vector<Tensor> initializer list and push_back() are views.
+    std::vector<Tensor> vec{t0};
+    vec.push_back(t1);
+    EXPECT_TRUE(t0.IsSame(vec[0]));
+    EXPECT_TRUE(t1.IsSame(vec[1]));
+    EXPECT_TRUE(vec[0].IsSame(vec[1]));
 }
 
 }  // namespace unit_test
