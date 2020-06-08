@@ -940,18 +940,12 @@ std::vector<Tensor> Tensor::NonZeroNumpy() const {
 
 Tensor Tensor::NonZero() const { return kernel::NonZero(*this); }
 
-bool Tensor::AllClose(const Tensor& other,
-                      double rtol,
-                      double atol,
-                      bool equal_nan) const {
+bool Tensor::AllClose(const Tensor& other, double rtol, double atol) const {
     // TODO: support nan;
     throw std::runtime_error("Unimplemented");
 }
 
-Tensor Tensor::IsClose(const Tensor& other,
-                       double rtol,
-                       double atol,
-                       bool equal_nan) const {
+Tensor Tensor::IsClose(const Tensor& other, double rtol, double atol) const {
     if (GetDevice() != other.GetDevice()) {
         utility::LogError("Device mismatch {} != {}.", GetDevice().ToString(),
                           other.GetDevice().ToString());
@@ -969,10 +963,7 @@ Tensor Tensor::IsClose(const Tensor& other,
     Tensor rhs = other.To(Dtype::Float64);
     Tensor actual_error = lhs - rhs.Abs();
     Tensor max_error = atol + rtol * rhs.Abs();
-    Tensor is_close = actual_error <= max_error;
-
-    // TODO: support nan
-    return is_close;
+    return actual_error <= max_error;
 }
 
 bool Tensor::IsSame(const Tensor& other) const {
