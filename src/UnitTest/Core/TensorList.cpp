@@ -67,10 +67,13 @@ TEST_P(TensorListPermuteDevices, ConstructFromIterators) {
     std::vector<Tensor> tensors = {t0, t1, t2};
     TensorList tensor_list(tensors.begin(), tensors.end());
 
+    // Check tensor list
     SizeVector shape({3, 2, 3});
     EXPECT_EQ(tensor_list.AsTensor().GetShape(), shape);
     EXPECT_EQ(tensor_list.GetSize(), 3);
     EXPECT_EQ(tensor_list.GetReservedSize(), 8);
+
+    // Check each tensor
 }
 
 TEST_P(TensorListPermuteDevices, ConstructFromVector) {

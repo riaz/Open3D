@@ -940,4 +940,24 @@ std::vector<Tensor> Tensor::NonZeroNumpy() const {
 
 Tensor Tensor::NonZero() const { return kernel::NonZero(*this); }
 
+bool Tensor::AllClose(const Tensor& other,
+                      double rtol,
+                      double atol,
+                      bool equal_nan) const {
+    throw std::runtime_error("Unimplemented");
+}
+
+Tensor Tensor::IsClose(const Tensor& other,
+                       double rtol,
+                       double atol,
+                       bool equal_nan) const {
+    throw std::runtime_error("Unimplemented");
+}
+
+bool Tensor::IsSame(const Tensor& other) const {
+    return blob_ == other.blob_ && shape_ == other.shape_ &&
+           strides_ == other.strides_ && data_ptr_ == other.data_ptr_ &&
+           dtype_ == other.dtype_;
+}
+
 }  // namespace open3d
