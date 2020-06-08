@@ -105,37 +105,41 @@ public:
         size_ = size;
         reserved_size_ = ReserveSize(size_);
 
-        // Set element_shape_.
+        // Check shape consistency and set element_shape_.
         element_shape_ = begin->GetShape();
         std::for_each(begin, end, [&](const Tensor& tensor) -> void {
             if (tensor.GetShape() != element_shape_) {
                 utility::LogError(
-                        "Tensors must have the same shape {}, "
-                        "but got {}.",
+                        "Tensors must have the same shape {}, but got {}.",
                         element_shape_, tensor.GetShape());
             }
         });
 
-        // Set dtype
+        // Check dtype consistency.
         Dtype dtype = begin->GetDtype();
-        bool dtype_consistent = std::accumulate(
-                std::next(begin), end, true,
-                [&](bool same_type, const Tensor& tensor) {
-                    return same_type && (dtype == tensor.GetDtype());
-                });
-        if (!dtype_consistent) {
-            utility::LogError(
-                    "Inconsistent tensor dtypes in tensors are not supported "
-                    "in TensorList.");
-        }
+        std::for_each(begin, end, [&](const Tensor& tensor) -> void {
+            if (tensor.GetDtype() != dtype) {
+                utility::LogError(
+                        "Tensors must have the same dtype {}, but got {}.",
+                        DtypeUtil::ToString(dtype),
+                        DtypeUtil::ToString(tensor.GetDtype()));
+            }
+        });
 
-        // Construct internal tensor
+        // Check device consistency.
         Device device = begin->GetDevice();
+        std::for_each(begin, end, [&](const Tensor& tensor) -> void {
+            if (tensor.GetDevice() != device) {
+                utility::LogError(
+                        "Tensors must have the same device {}, but got {}.",
+                        device.ToString(), tensor.GetDevice().ToString());
+            }
+        });
+
+        // Construct internal tensor.
         SizeVector expanded_shape =
                 ExpandFrontDim(element_shape_, reserved_size_);
         internal_tensor_ = Tensor(expanded_shape, dtype, device);
-
-        // Assign tensors
         size_t i = 0;
         for (auto iter = begin; iter != end; ++iter, ++i) {
             internal_tensor_[i] = *iter;
