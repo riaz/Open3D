@@ -101,19 +101,22 @@ public:
                     "Empty input tensors cannot initialize a TensorList.");
         }
 
-        // Infer size and reserved_size
+        // Set size_ and reserved_size_.
         size_ = size;
         reserved_size_ = ReserveSize(size_);
 
-        // Infer element_shape
-        element_shape_ = std::accumulate(
-                std::next(begin), end, begin->GetShape(),
-                [](const SizeVector shape, const Tensor& tensor) {
-                    return shape_util::BroadcastedShape(std::move(shape),
-                                                        tensor.GetShape());
-                });
+        // Set element_shape_.
+        element_shape_ = begin->GetShape();
+        std::for_each(begin, end, [&](const Tensor& tensor) -> void {
+            if (tensor.GetShape() != element_shape_) {
+                utility::LogError(
+                        "Tensors must have the same shape {}, "
+                        "but got {}.",
+                        element_shape_, tensor.GetShape());
+            }
+        });
 
-        // Infer dtype
+        // Set dtype
         Dtype dtype = begin->GetDtype();
         bool dtype_consistent = std::accumulate(
                 std::next(begin), end, true,
