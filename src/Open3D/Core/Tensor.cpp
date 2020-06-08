@@ -944,6 +944,7 @@ bool Tensor::AllClose(const Tensor& other,
                       double rtol,
                       double atol,
                       bool equal_nan) const {
+    // TODO: support nan;
     throw std::runtime_error("Unimplemented");
 }
 
@@ -951,7 +952,27 @@ Tensor Tensor::IsClose(const Tensor& other,
                        double rtol,
                        double atol,
                        bool equal_nan) const {
-    throw std::runtime_error("Unimplemented");
+    if (GetDevice() != other.GetDevice()) {
+        utility::LogError("Device mismatch {} != {}.", GetDevice().ToString(),
+                          other.GetDevice().ToString());
+    }
+    if (dtype_ != other.dtype_) {
+        utility::LogError("Dtype mismatch {} != {}.",
+                          DtypeUtil::ToString(dtype_),
+                          DtypeUtil::ToString(other.dtype_));
+    }
+    if (shape_ != other.shape_) {
+        utility::LogError("Shape mismatch {} != {}.", shape_, other.shape_);
+    }
+
+    Tensor lhs = this->To(Dtype::Float64);
+    Tensor rhs = other.To(Dtype::Float64);
+    Tensor actual_error = lhs - rhs.Abs();
+    Tensor max_error = atol + rtol * rhs.Abs();
+    Tensor is_close = actual_error <= max_error;
+
+    // TODO: support nan
+    return is_close;
 }
 
 bool Tensor::IsSame(const Tensor& other) const {
