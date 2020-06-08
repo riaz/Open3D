@@ -43,6 +43,17 @@ TEST_P(TensorListPermuteDevices, EmptyConstructor) {
     Device device = GetParam();
     Dtype dtype = Dtype::Float32;
 
+    // TensorList allows 0-sized and scalar {} element_shape
+    for (const SizeVector &element_shape :
+         std::vector<SizeVector>{{}, {0}, {0, 0}, {0, 1}, {1, 0}, {2, 3}}) {
+        TensorList tl(element_shape, dtype, device);
+        EXPECT_EQ(tl.GetElementShape(), element_shape);
+        EXPECT_EQ(tl.GetDtype(), dtype);
+        EXPECT_EQ(tl.GetDevice(), device);
+    }
+
+    // TensorList does not allow negative element_shape
+    EXPECT_ANY_THROW(TensorList({0, -1}, dtype, device));
     EXPECT_ANY_THROW(TensorList({-1, -1}, dtype, device));
 }
 

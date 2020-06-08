@@ -71,7 +71,7 @@ TEST_P(TensorPermuteDevices, Constructor) {
         Tensor t(shape, dtype, device);
         EXPECT_EQ(t.GetShape(), shape);
         EXPECT_EQ(t.GetDtype(), dtype);
-        EXPECT_EQ(t.GetBlob()->GetDevice(), device);
+        EXPECT_EQ(t.GetDevice(), device);
     }
 
     EXPECT_ANY_THROW(Tensor({-1}, dtype, device));
