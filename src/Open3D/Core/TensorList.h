@@ -41,7 +41,7 @@ namespace open3d {
 
 /// A TensorList is a list of Tensors of the same shape, similar to
 /// std::vector<Tensor>. Internally, a TensorList stores the Tensors in one
-/// bigger internal tensor, where the first dimension of the internal tensor is
+/// bigger internal tensor, where the begin dimension of the internal tensor is
 /// extendable.
 ///
 /// Examples:
@@ -74,30 +74,69 @@ public:
                            dtype,
                            device) {}
 
-    /// Constructor a TensorList from a vector of Tensors.
+    /// Constructs a TensorList from a vector of Tensors.
     ///
-    /// \param tensors A vector of tensors. The tensors must be broadcastable to
-    /// a common shape, which will be set as the element_shape of the
-    /// TensorList. The tensors must be on the same device and have the same
-    /// dtype.
-    TensorList(const std::vector<Tensor>& tensors) {
-        ConstructFromIterators(tensors.begin(), tensors.end());
-    }
+    /// \param tensors A vector of tensors. The tensors must have common shape,
+    /// dtype and device.
+    TensorList(const std::vector<Tensor>& tensors)
+        : TensorList(tensors.begin(), tensors.end()) {}
 
-    /// Constructor from a list of broadcastable tensors.
+    /// Constructs a TensorList from a list of Tensors.
     ///
-    /// \param tensors A list of tensors. The tensors must be broadcastable to
-    /// a common shape, which will be set as the element_shape of the
-    /// TensorList.
-    TensorList(const std::initializer_list<Tensor>& tensors) {
-        ConstructFromIterators(tensors.begin(), tensors.end());
-    }
+    /// \param tensors A list of tensors. The tensors must have common shape,
+    /// dtype and device.
+    TensorList(const std::initializer_list<Tensor>& tensors)
+        : TensorList(tensors.begin(), tensors.end()) {}
 
-    /// Constructor from iterators, an abstract wrapper for std vectors
-    /// and initializer lists.
+    /// Constructs a TensorList from Tensor iterator. The tensors must have
+    /// common shape, dtype and device.
+    ///
+    /// \param begin Begin iterator.
+    /// \param end End iterator.
     template <class InputIterator>
-    TensorList(InputIterator first, InputIterator last) {
-        ConstructFromIterators(first, last);
+    TensorList(InputIterator begin, InputIterator end) {
+        int64_t size = std::distance(begin, end);
+        if (size == 0) {
+            utility::LogError(
+                    "Empty input tensors cannot initialize a TensorList.");
+        }
+
+        // Infer size and reserved_size
+        size_ = size;
+        reserved_size_ = ReserveSize(size_);
+
+        // Infer element_shape
+        element_shape_ = std::accumulate(
+                std::next(begin), end, begin->GetShape(),
+                [](const SizeVector shape, const Tensor& tensor) {
+                    return shape_util::BroadcastedShape(std::move(shape),
+                                                        tensor.GetShape());
+                });
+
+        // Infer dtype
+        Dtype dtype = begin->GetDtype();
+        bool dtype_consistent = std::accumulate(
+                std::next(begin), end, true,
+                [&](bool same_type, const Tensor& tensor) {
+                    return same_type && (dtype == tensor.GetDtype());
+                });
+        if (!dtype_consistent) {
+            utility::LogError(
+                    "Inconsistent tensor dtypes in tensors are not supported "
+                    "in TensorList.");
+        }
+
+        // Construct internal tensor
+        Device device = begin->GetDevice();
+        SizeVector expanded_shape =
+                ExpandFrontDim(element_shape_, reserved_size_);
+        internal_tensor_ = Tensor(expanded_shape, dtype, device);
+
+        // Assign tensors
+        size_t i = 0;
+        for (auto iter = begin; iter != end; ++iter, ++i) {
+            internal_tensor_[i] = *iter;
+        }
     }
 
     /// Constructor from a raw internal tensor.
@@ -164,7 +203,7 @@ public:
         return *this;
     }
 
-    /// Extract the i-th Tensor along the first axis, returning a new view.
+    /// Extract the i-th Tensor along the begin axis, returning a new view.
     /// For advanced indexing like Slice, use tensorlist.AsTensor().Slice().
     Tensor operator[](int64_t index) const;
 
@@ -186,57 +225,10 @@ public:
     const Tensor& GetInternalTensor() const { return internal_tensor_; }
 
 protected:
-    // The shared internal constructor for iterators.
-    template <class InputIterator>
-    void ConstructFromIterators(InputIterator first, InputIterator last) {
-        int64_t size = std::distance(first, last);
-        if (size == 0) {
-            utility::LogError(
-                    "Empty input tensors cannot initialize a TensorList.");
-        }
-
-        // Infer size and reserved_size
-        size_ = size;
-        reserved_size_ = ReserveSize(size_);
-
-        // Infer element_shape
-        element_shape_ = std::accumulate(
-                std::next(first), last, first->GetShape(),
-                [](const SizeVector shape, const Tensor& tensor) {
-                    return shape_util::BroadcastedShape(std::move(shape),
-                                                        tensor.GetShape());
-                });
-
-        // Infer dtype
-        Dtype dtype = first->GetDtype();
-        bool dtype_consistent = std::accumulate(
-                std::next(first), last, true,
-                [&](bool same_type, const Tensor& tensor) {
-                    return same_type && (dtype == tensor.GetDtype());
-                });
-        if (!dtype_consistent) {
-            utility::LogError(
-                    "Inconsistent tensor dtypes in tensors are not supported "
-                    "in TensorList.");
-        }
-
-        // Construct internal tensor
-        Device device = first->GetDevice();
-        SizeVector expanded_shape =
-                ExpandFrontDim(element_shape_, reserved_size_);
-        internal_tensor_ = Tensor(expanded_shape, dtype, device);
-
-        // Assign tensors
-        size_t i = 0;
-        for (auto iter = first; iter != last; ++iter, ++i) {
-            internal_tensor_[i] = *iter;
-        }
-    }
-
     /// Expand the size of the internal tensor.
     void ExpandTensor(int64_t new_reserved_size);
 
-    /// Expand the element_shape in the first indexing dimension.
+    /// Expand the element_shape in the begin indexing dimension.
     /// e.g. (8, 8, 8) -> (1, 8, 8, 8)
     static SizeVector ExpandFrontDim(const SizeVector& element_shape,
                                      int64_t new_dim_size = 1);
