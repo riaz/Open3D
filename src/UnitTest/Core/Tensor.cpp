@@ -2386,5 +2386,37 @@ TEST_P(TensorPermuteDevices, ReduceMean) {
     EXPECT_TRUE(std::isnan(dst.ToFlatVector<float>()[0]));
 }
 
+TEST_P(TensorPermuteDevices, IsSame) {
+    Device device = GetParam();
+
+    // "Shallow" copy.
+    Tensor t0 = Tensor::Ones({6, 8}, Dtype::Float32, device);
+    Tensor t1 = t0;  // "Shallow" copy
+    EXPECT_TRUE(t0.IsSame(t1));
+    EXPECT_TRUE(t1.IsSame(t0));
+
+    // New tensor of the same value.
+    Tensor t2 = Tensor::Ones({6, 8}, Dtype::Float32, device);
+    EXPECT_FALSE(t0.IsSame(t2));
+    EXPECT_FALSE(t2.IsSame(t0));
+
+    // Tensor::Contiguous() does not copy if already contiguous.
+    Tensor t0_contiguous = t0.Contiguous();
+    EXPECT_TRUE(t0.IsSame(t0_contiguous));
+    EXPECT_TRUE(t0_contiguous.IsSame(t0));
+
+    // Slices are views.
+    Tensor t0_slice =
+            t0.GetItem({TensorKey::Slice(0, 5, 2)})[0];  // t0[0:5:2][0]
+    Tensor t1_slice = t1[0];
+    EXPECT_TRUE(t0_slice.IsSame(t1_slice));
+    EXPECT_TRUE(t1_slice.IsSame(t0_slice));
+
+    // Explicit copy to the same device.
+    Tensor t0_copy = t0.Copy(device);
+    EXPECT_FALSE(t0.IsSame(t0_copy));
+    EXPECT_FALSE(t0_copy.IsSame(t0));
+}
+
 }  // namespace unit_test
 }  // namespace open3d
